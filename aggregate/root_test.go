@@ -18,10 +18,10 @@ type ModelEventA struct {}
 type ModelEventB struct {}
 
 func newModel() *Model {
-	m := newEmpty()
-	m.id = NewID()
+	m  := newEmpty()
+	id := NewID()
 	m.Root.Applicator = m
-	m.RecordThat(message.NewEvent(message.ID(m.id), &ModelCreated{}))
+	m.Record(message.NewEvent(message.ID(id), &ModelCreated{}))
 	return m
 }
 
@@ -42,10 +42,10 @@ func (m *Model) ReceivedB() bool {
 	defer m.RUnlock()
 	return m.b
 }
-func (m *Model) ApplyThat(event message.Event) {
+func (m *Model) Apply(event message.Event) {
 	switch event.Type().(type) {
 		case *ModelCreated:
-			m.id = ID(event.AggregateID())
+			m.Root.WithID(ID(event.AggregateID()))
 			break
 		case *ModelEventA:
 			m.a = true
@@ -74,14 +74,65 @@ func TestRoot_flush_events(t *testing.T) {
 	}
 
 	for _, ev := range events {
-		m.RecordThat(ev)
+		m.Record(ev)
 	}
 
-	for range m.FlushEvents() {}
+	for range m.Flush() {}
 
 	if len(m.recordedEvents) != 0 {
 		t.Errorf("want 0, got %d", len(m.recordedEvents))
 	}
+}
+
+
+func TestRoot_replay_panic_nil_applicator(t *testing.T) {
+	defer func() {
+		r := recover()
+
+		if r == nil {
+			t.Error("should have caused panic")
+		}
+
+		if r != "nil Root.Applicator" {
+			t.Errorf("expected %q, got %q", "nil Root.Applicator", r)
+		}
+	}()
+
+	id := NewID()
+	m  := &Model{}
+	events := []message.Event{
+		message.NewEvent(message.ID(id), &ModelCreated{}).WithAggregateVersion(1),
+	}
+
+	stream := make(chan message.Event, len(events))
+	go func () {
+		defer close(stream)
+		for _, ev := range events {
+			stream <- ev
+		}
+	}()
+
+	if err := m.Replay(stream); err != nil {
+		t.Error(err)
+	}
+}
+
+
+func TestRoot_Record_panic_nil_applicator(t *testing.T) {
+	defer func() {
+		r := recover()
+
+		if r == nil {
+			t.Error("should have caused panic")
+		}
+
+		if r != "nil Root.Applicator" {
+			t.Errorf("expected %q, got %q", "nil Root.Applicator", r)
+		}
+	}()
+
+	m := &Model{}
+	m.Record(message.NewEvent(message.ID(m.ID()), &ModelCreated{}).WithAggregateVersion(1))
 }
 
 func TestRoot_replay_entity(t *testing.T) {
