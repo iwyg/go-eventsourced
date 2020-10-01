@@ -9,13 +9,36 @@ func NewID() ID {
 }
 
 func (id ID) Equals(other ID) bool {
-	return identity.ID(id).Equals(identity.ID(other))
+	return id.id().Equals(other.id())
+}
+
+func (id ID) MarshalJSON() ([]byte, error) {
+	return id.id().MarshalJSON()
+}
+
+func (id ID) UnmarshalJSON(b []byte) error {
+	recv := id.id()
+	return recv.UnmarshalJSON(b)
 }
 
 func (id ID) String() string {
-	return identity.ID(id).String()
+	return id.id().String()
+}
+
+func (id *ID) Scan(src interface{}) error {
+	var n identity.ID
+	if err := n.Scan(src); err != nil {
+		return err
+	}
+
+	copy(id[:], n[:])
+	return nil
 }
 
 func (id ID) Nil() bool {
-	return identity.ID(id).Nil()
+	return id.id().Nil()
+}
+
+func (id ID) id() identity.ID {
+	return identity.ID(id)
 }

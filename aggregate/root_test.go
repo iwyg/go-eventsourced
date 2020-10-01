@@ -77,9 +77,7 @@ func TestRoot_flush_events(t *testing.T) {
 		m.RecordThat(ev)
 	}
 
-	for e := range m.FlushEvents() {
-		t.Logf("%#v", e)
-	}
+	for range m.FlushEvents() {}
 
 	if len(m.recordedEvents) != 0 {
 		t.Errorf("want 0, got %d", len(m.recordedEvents))
