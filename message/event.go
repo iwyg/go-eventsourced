@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	metaKeyAggVers = "@@aggregate_id"
-	metaKeyAggID   = "@@aggregate_version"
+	metaKeyAggVers MetaKey = "@@aggregate_id"
+	metaKeyAggID   MetaKey = "@@aggregate_version"
 )
 
 type Message interface {
@@ -159,4 +159,3 @@ func (e *event) WithCausationID(cid ID) Event {
 	cp.causationID = cid
 	return  cp
 }
-

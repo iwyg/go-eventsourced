@@ -90,12 +90,12 @@ func (r *Root) Flush() <-chan message.Event {
 
 // Records records an inbound event
 func (r *Root) Record(ev message.Event) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	if r.Applicator == nil {
 		panic("nil Root.Applicator")
 		return
 	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.Applicator.Apply(ev)
 	r.version++
 	event := ev.WithAggregateVersion(r.version)
