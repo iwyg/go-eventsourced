@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"encoding/json"
 	"github.com/google/uuid"
 )
 
@@ -17,7 +18,7 @@ func (id ID) Nil() bool {
 }
 
 func (id ID) MarshalJSON() ([]byte, error)  {
-	return []byte(id.String()), nil
+	return json.Marshal(id.String())
 }
 
 func (id *ID) UnmarshalJSON(b []byte) error  {

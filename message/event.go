@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	metaKeyAggVers MetaKey = "@@aggregate_id"
-	metaKeyAggID   MetaKey = "@@aggregate_version"
+	metaKeyAggID   MetaKey = "@@aggregate_id"
+	metaKeyAggVers MetaKey = "@@aggregate_version"
 )
 
 type Message interface {

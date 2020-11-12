@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"testing"
 )
@@ -51,7 +52,7 @@ func TestID_MarshalJSON(t *testing.T) {
 		t.Error(err)
 	}
 
-	if string(bt) != id.String() {
+	if string(bt) != fmt.Sprintf("%q", id.String()) {
 		t.Errorf("want %s got %s", bt, id)
 	}
 }
@@ -71,6 +72,7 @@ func TestID_UnmarshalJSON(t *testing.T) {
 func TestID_Scan_stringy_bytes(t *testing.T) {
 	bts := []byte(New().String())
 	var id ID
+	t.Logf("%s", bts)
 	if err := id.Scan(bts); err != nil {
 		t.Error(err)
 	}
