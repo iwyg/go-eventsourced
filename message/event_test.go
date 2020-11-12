@@ -18,9 +18,9 @@ func TestEvent_Occurred(t *testing.T) {
 func TestEvent_WithMetaData(t *testing.T) {
 	id   := NewID()
 	ev   := NewEvent(id, struct {}{})
-	meta := EventMetaData{"__user": "username"}
+	meta := MetaData{"__user": "username"}
 	ev    = ev.WithMetaData(meta)
-	eventCopy := ev.WithMetaData(EventMetaData{"__roles": []string{"admin", "user"}})
+	eventCopy := ev.WithMetaData(MetaData{"__roles": []string{"admin", "user"}})
 
 	if _, found := ev.MetaData()["__user"]; !found {
 		t.Errorf("key %q should not in original meta data", "__user")
@@ -38,9 +38,9 @@ func TestEvent_WithMetaData(t *testing.T) {
 func TestEvent_WithAddedMetaData(t *testing.T) {
 	id   := NewID()
 	ev   := NewEvent(id, struct {}{})
-	meta := EventMetaData{"__user": "username"}
+	meta := MetaData{"__user": "username"}
 	ev    = ev.WithMetaData(meta)
-	eventCopy := ev.WithAddedMetaData(EventMetaData{"__roles": []string{"admin", "user"}})
+	eventCopy := ev.WithAddedMetaData(MetaData{"__roles": []string{"admin", "user"}})
 
 	if _, found := ev.MetaData()["__user"]; !found {
 		t.Errorf("key %q should be in original meta data", "__user")

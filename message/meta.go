@@ -10,9 +10,9 @@ func (mk MetaKey) String() string {
 	return string(mk)
 }
 
-type EventMetaData map[MetaKey]interface{}
+type MetaData map[MetaKey]interface{}
 
-func (em *EventMetaData) Scan(src interface{}) error {
+func (em *MetaData) Scan(src interface{}) error {
 	p, ok := src.([]byte)
 	if !ok {
 		return errors.New("can't cast source input to []byte")
@@ -21,7 +21,7 @@ func (em *EventMetaData) Scan(src interface{}) error {
 	return json.Unmarshal(p, em)
 }
 
-func (em EventMetaData) merge(meta EventMetaData) EventMetaData {
+func (em MetaData) merge(meta MetaData) MetaData {
 	m := em
 	if meta == nil {
 		return m
@@ -33,8 +33,8 @@ func (em EventMetaData) merge(meta EventMetaData) EventMetaData {
 
 	return m
 }
-func (em EventMetaData) copy() EventMetaData {
-	m := make(EventMetaData, len(em))
+func (em MetaData) copy() MetaData {
+	m := make(MetaData, len(em))
 	for key, val := range em {
 		m[key] = val
 	}

@@ -3,7 +3,7 @@ package message
 import "testing"
 
 func TestEventMetaData_Scan(t *testing.T) {
-	var md EventMetaData
+	var md MetaData
 	src := []byte(`{"answerToEverything":42}`)
 
 	if err := md.Scan(src); err != nil {
