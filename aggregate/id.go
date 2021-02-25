@@ -16,9 +16,13 @@ func (id ID) MarshalJSON() ([]byte, error) {
 	return id.id().MarshalJSON()
 }
 
-func (id ID) UnmarshalJSON(b []byte) error {
+func (id *ID) UnmarshalJSON(b []byte) error {
 	recv := id.id()
-	return recv.UnmarshalJSON(b)
+	if err := recv.UnmarshalJSON(b); err != nil {
+		return err
+	}
+	copy(id[:], recv[:])
+	return nil
 }
 
 func (id ID) String() string {

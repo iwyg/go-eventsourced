@@ -1,37 +1,10 @@
 package aggregate
 
 import (
-	"github.com/iwyg/go-eventsourced/identity"
 	"github.com/iwyg/go-eventsourced/message"
 	"sync"
 )
 
-type Aggregate interface {
-	// ID return the aggregate identity
-	ID() identity.ID
-	// Version return the aggregate version
-	Version() uint64
-}
-
-type Recorder interface {
-	// Records records an inbound event
-	Record(message.Event)
-}
-
-type Flusher interface {
-	// Flush flushes stored events and returns them as an outbound stream
-	Flush() <-chan message.Event
-}
-
-type Replayer interface {
-	// Replay replays inbound a stream events onto a target
-	Replay(<-chan message.Event) error
-}
-
-type Applicator interface {
-	// Apply applies an inbound event onto a target
-	Apply(message.Event)
-}
 
 type Root struct {
 	mu             sync.RWMutex

@@ -2,56 +2,52 @@ package aggregate
 
 import (
 	"github.com/iwyg/go-eventsourced/message"
-	"reflect"
 	"sync"
 	"testing"
 )
 
-type Model struct {
+type Account struct {
 	Root
 	sync.RWMutex
-	a, b bool
+	balance int64
 }
 
-type ModelCreated struct {}
-type ModelEventA struct {}
-type ModelEventB struct {}
+type AccountOpened struct {}
+type MoneyAdded struct {Amount uint64}
+type MoneyWithdrawn struct {Amount uint64}
 
-func newModel() *Model {
+func newModel() *Account {
 	m  := newEmpty()
 	id := NewID()
 	m.Root.Applicator = m
-	m.Record(message.NewEvent(message.ID(id), &ModelCreated{}))
+	m.Record(message.NewEvent(message.ID(id), &AccountOpened{}))
 	return m
 }
 
-func newEmpty() *Model {
-	m := &Model{}
+func newEmpty() *Account {
+	m := &Account{}
 	m.Root.Applicator = m
 	return m
 }
 
-func (m *Model) ReceivedA() bool {
+func (m *Account) Balance() int64 {
 	m.RLock()
 	defer m.RUnlock()
-	return m.a
+	return m.balance
 }
 
-func (m *Model) ReceivedB() bool {
-	m.RLock()
-	defer m.RUnlock()
-	return m.b
-}
-func (m *Model) Apply(event message.Event) {
+func (m *Account) Apply(event message.Event) {
 	switch event.Type().(type) {
-		case *ModelCreated:
+		case *AccountOpened:
 			m.Root.WithID(ID(event.AggregateID()))
 			break
-		case *ModelEventA:
-			m.a = true
+		case *MoneyAdded:
+			ev, _ := event.Type().(*MoneyAdded)
+			m.balance = m.balance + int64(ev.Amount)
 			break
-		case *ModelEventB:
-			m.b = true
+		case *MoneyWithdrawn:
+			ev, _ := event.Type().(*MoneyWithdrawn)
+			m.balance = m.balance - int64(ev.Amount)
 			break
 	}
 }
@@ -66,18 +62,22 @@ func TestRoot_in_entity_struct(t *testing.T) {
 
 func TestRoot_flush_events(t *testing.T) {
 	id := NewID()
-	m := newModel()
+	m := newEmpty()
 	events := []message.Event{
-		message.NewEvent(message.ID(id), &ModelCreated{}).WithAggregateVersion(1),
-		message.NewEvent(message.ID(id), &ModelEventA{}).WithAggregateVersion(2),
-		message.NewEvent(message.ID(id), &ModelEventB{}).WithAggregateVersion(3),
+		message.NewEvent(message.ID(id), &AccountOpened{}).WithAggregateVersion(1),
+		message.NewEvent(message.ID(id), &MoneyAdded{Amount: 100}).WithAggregateVersion(2),
+		message.NewEvent(message.ID(id), &MoneyWithdrawn{Amount: 34}).WithAggregateVersion(3),
 	}
 
 	for _, ev := range events {
 		m.Record(ev)
 	}
 
-	for range m.Flush() {}
+	if len(m.recordedEvents) != 3 {
+		t.Errorf("want 3, got %d", len(m.recordedEvents))
+	}
+
+	_ = m.Flush()
 
 	if len(m.recordedEvents) != 0 {
 		t.Errorf("want 0, got %d", len(m.recordedEvents))
@@ -99,9 +99,9 @@ func TestRoot_replay_panic_nil_applicator(t *testing.T) {
 	}()
 
 	id := NewID()
-	m  := &Model{}
+	m  := &Account{}
 	events := []message.Event{
-		message.NewEvent(message.ID(id), &ModelCreated{}).WithAggregateVersion(1),
+		message.NewEvent(message.ID(id), &AccountOpened{}).WithAggregateVersion(1),
 	}
 
 	stream := make(chan message.Event, len(events))
@@ -131,17 +131,19 @@ func TestRoot_Record_panic_nil_applicator(t *testing.T) {
 		}
 	}()
 
-	m := &Model{}
-	m.Record(message.NewEvent(message.ID(m.ID()), &ModelCreated{}).WithAggregateVersion(1))
+	m := &Account{}
+	m.Record(message.NewEvent(message.ID(m.ID()), &AccountOpened{}).WithAggregateVersion(1))
 }
 
 func TestRoot_replay_entity(t *testing.T) {
 	id := NewID()
-	m := newModel()
+	m := newEmpty()
 	events := []message.Event{
-		message.NewEvent(message.ID(id), &ModelCreated{}).WithAggregateVersion(1),
-		message.NewEvent(message.ID(id), &ModelEventA{}).WithAggregateVersion(2),
-		message.NewEvent(message.ID(id), &ModelEventB{}).WithAggregateVersion(3),
+		message.NewEvent(message.ID(id), &AccountOpened{}).WithAggregateVersion(1),
+		message.NewEvent(message.ID(id), &MoneyAdded{180}).WithAggregateVersion(2),
+		message.NewEvent(message.ID(id), &MoneyWithdrawn{32}).WithAggregateVersion(3),
+		message.NewEvent(message.ID(id), &MoneyAdded{223}).WithAggregateVersion(4),
+		message.NewEvent(message.ID(id), &MoneyWithdrawn{23}).WithAggregateVersion(5),
 	}
 
 	stream := make(chan message.Event, len(events))
@@ -160,15 +162,12 @@ func TestRoot_replay_entity(t *testing.T) {
 		t.Errorf("want model id %s, got %s", id, m.ID())
 	}
 
-	if m.Version() != 3 {
+	if m.Version() != 5 {
 		t.Errorf("want model version 3, got %d", m.Version())
 	}
 
-	if !m.ReceivedA() {
-		t.Errorf("model should've received %s", reflect.TypeOf(&ModelEventA{}))
-	}
-
-	if !m.ReceivedB() {
-		t.Errorf("model should've received %s", reflect.TypeOf(&ModelEventB{}))
+	var expectedBalance int64 = 348
+	if m.Balance() != expectedBalance {
+		t.Errorf("want %d, got %d", expectedBalance, m.Balance())
 	}
 }
