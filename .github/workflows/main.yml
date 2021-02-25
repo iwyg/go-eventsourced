@@ -24,7 +24,7 @@ jobs:
       - name: Run default tests suit
         uses: actions/setup-go@v2.1.2
         with:
-          go-version: 1.14
+          go-version: 1.16
 
       - run: go mod vendor
       - run: go test -short ./...
@@ -41,7 +41,7 @@ jobs:
       - name: Run default tests suit
         uses: actions/setup-go@v2.1.2
         with:
-          go-version: 1.14
+          go-version: 1.16
 
       - run: go mod vendor
       - run: go test -race ./...
