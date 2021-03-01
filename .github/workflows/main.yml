@@ -22,7 +22,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run default tests suit
-        uses: actions/setup-go@v2.1.2
+        uses: actions/setup-go@v2.1.3
         with:
           go-version: 1.16
 
@@ -39,9 +39,9 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run default tests suit
-        uses: actions/setup-go@v2.1.2
+        uses: actions/setup-go@v2.1.3
         with:
           go-version: 1.16
-
+          
       - run: go mod vendor
       - run: go test -race ./...
